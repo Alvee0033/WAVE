@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "240747642772",
+    "project_id": "wave-dc616",
+    "storage_bucket": "wave-dc616.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:240747642772:android:ec87bfb4d2ecba51d95981",
+        "android_client_info": {
+          "package_name": "com.wave.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "240747642772-heh6odedjfk4j7ti3ga454ntnnrqufb3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wave.app",
+            "certificate_hash": "c7e94104cef819f7774372254b3aee5e5e2807a3"
+          }
+        },
+        {
+          "client_id": "240747642772-8r8blna4mfkbb35r995ehop7qrun395i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0AEwSFVU94zpNdyL4cGXsxKsCMN59sUk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "240747642772-8r8blna4mfkbb35r995ehop7qrun395i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

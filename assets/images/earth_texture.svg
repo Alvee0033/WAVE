@@ -1,0 +1,89 @@
+<svg width="512" height="256" viewBox="0 0 512 256" xmlns="http://www.w3.org/2000/svg">
+  <!-- Earth texture map in equirectangular projection -->
+  <defs>
+    <!-- Ocean gradient -->
+    <radialGradient id="oceanGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4A90E2"/>
+      <stop offset="70%" stop-color="#2E5C8A"/>
+      <stop offset="100%" stop-color="#1A3A5C"/>
+    </radialGradient>
+    
+    <!-- Land gradient -->
+    <linearGradient id="landGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8FBC8F"/>
+      <stop offset="30%" stop-color="#6B8E23"/>
+      <stop offset="60%" stop-color="#556B2F"/>
+      <stop offset="100%" stop-color="#2F4F2F"/>
+    </linearGradient>
+    
+    <!-- Mountain gradient -->
+    <linearGradient id="mountainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A0522D"/>
+      <stop offset="50%" stop-color="#8B4513"/>
+      <stop offset="100%" stop-color="#654321"/>
+    </linearGradient>
+    
+    <!-- Ice gradient -->
+    <linearGradient id="iceGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F0F8FF"/>
+      <stop offset="50%" stop-color="#E6F3FF"/>
+      <stop offset="100%" stop-color="#B0E0E6"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Ocean background -->
+  <rect width="512" height="256" fill="url(#oceanGradient)"/>
+  
+  <!-- North America -->
+  <path d="M 80 60 Q 120 50 160 70 Q 180 90 170 120 Q 150 140 120 130 Q 90 120 80 100 Z" fill="url(#landGradient)"/>
+  
+  <!-- South America -->
+  <path d="M 140 140 Q 160 130 170 160 Q 175 190 160 210 Q 140 220 130 200 Q 125 170 140 140 Z" fill="url(#landGradient)"/>
+  
+  <!-- Europe -->
+  <path d="M 240 70 Q 270 65 290 80 Q 300 100 285 110 Q 260 115 240 100 Z" fill="url(#landGradient)"/>
+  
+  <!-- Africa -->
+  <path d="M 250 110 Q 280 105 300 130 Q 310 160 295 190 Q 275 200 255 185 Q 245 150 250 110 Z" fill="url(#landGradient)"/>
+  
+  <!-- Asia -->
+  <path d="M 300 60 Q 380 55 420 80 Q 450 100 440 120 Q 400 130 350 125 Q 310 110 300 60 Z" fill="url(#landGradient)"/>
+  
+  <!-- Australia -->
+  <path d="M 380 160 Q 420 155 440 170 Q 445 185 430 190 Q 400 195 380 180 Z" fill="url(#landGradient)"/>
+  
+  <!-- Antarctica (bottom) -->
+  <rect x="0" y="220" width="512" height="36" fill="url(#iceGradient)"/>
+  
+  <!-- Arctic (top) -->
+  <rect x="0" y="0" width="512" height="30" fill="url(#iceGradient)"/>
+  
+  <!-- Mountain ranges -->
+  <path d="M 90 80 Q 110 70 130 85 Q 140 95 125 100 Q 105 105 90 95 Z" fill="url(#mountainGradient)"/>
+  <path d="M 140 150 Q 155 140 165 155 Q 170 170 160 175 Q 145 180 140 165 Z" fill="url(#mountainGradient)"/>
+  <path d="M 320 70 Q 350 65 380 80 Q 390 90 375 95 Q 345 100 320 85 Z" fill="url(#mountainGradient)"/>
+  
+  <!-- Cloud patterns (subtle) -->
+  <g opacity="0.3">
+    <ellipse cx="100" cy="90" rx="25" ry="8" fill="white"/>
+    <ellipse cx="200" cy="120" rx="30" ry="10" fill="white"/>
+    <ellipse cx="350" cy="100" rx="20" ry="6" fill="white"/>
+    <ellipse cx="400" cy="140" rx="25" ry="8" fill="white"/>
+  </g>
+  
+  <!-- Latitude lines (subtle) -->
+  <g stroke="rgba(255,255,255,0.1)" stroke-width="1" fill="none">
+    <line x1="0" y1="64" x2="512" y2="64"/>   <!-- 60°N -->
+    <line x1="0" y1="85" x2="512" y2="85"/>   <!-- 30°N -->
+    <line x1="0" y1="128" x2="512" y2="128"/> <!-- Equator -->
+    <line x1="0" y1="171" x2="512" y2="171"/> <!-- 30°S -->
+    <line x1="0" y1="192" x2="512" y2="192"/> <!-- 60°S -->
+  </g>
+  
+  <!-- Longitude lines (subtle) -->
+  <g stroke="rgba(255,255,255,0.1)" stroke-width="1" fill="none">
+    <line x1="128" y1="0" x2="128" y2="256"/> <!-- 90°W -->
+    <line x1="256" y1="0" x2="256" y2="256"/> <!-- 0° -->
+    <line x1="384" y1="0" x2="384" y2="256"/> <!-- 90°E -->
+  </g>
+</svg>
