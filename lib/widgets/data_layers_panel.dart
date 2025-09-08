@@ -96,7 +96,7 @@ class _DataLayersPanelState extends State<DataLayersPanel>
       width: 40,
       height: 4,
       decoration: BoxDecoration(
-        color: AppTheme.textSecondary,
+        color: AppTheme.textSecondaryColor,
         borderRadius: BorderRadius.circular(2),
       ),
     );
@@ -112,7 +112,7 @@ class _DataLayersPanelState extends State<DataLayersPanel>
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
+              color: AppTheme.textPrimaryColor,
             ),
           ),
           const Spacer(),
@@ -120,7 +120,7 @@ class _DataLayersPanelState extends State<DataLayersPanel>
             onPressed: () => appState.hideLayersPanel(),
             icon: const Icon(
               Icons.close,
-              color: AppTheme.textSecondary,
+              color: AppTheme.textSecondaryColor,
             ),
           ),
         ],
@@ -150,7 +150,7 @@ class _DataLayersPanelState extends State<DataLayersPanel>
         border: Border.all(
           color: layer.enabled 
               ? layer.color.withOpacity(0.5)
-              : AppTheme.textSecondary.withOpacity(0.2),
+              : AppTheme.textSecondaryColor.withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -187,8 +187,8 @@ class _DataLayersPanelState extends State<DataLayersPanel>
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: layer.enabled 
-                        ? AppTheme.textPrimary 
-                        : AppTheme.textSecondary,
+                        ? AppTheme.textPrimaryColor 
+                        : AppTheme.textSecondaryColor,
                   ),
                 ),
               ),
@@ -201,8 +201,8 @@ class _DataLayersPanelState extends State<DataLayersPanel>
                 },
                 activeColor: layer.color,
                 activeTrackColor: layer.color.withOpacity(0.3),
-                inactiveThumbColor: AppTheme.textSecondary,
-                inactiveTrackColor: AppTheme.textSecondary.withOpacity(0.2),
+                inactiveThumbColor: AppTheme.textSecondaryColor,
+                inactiveTrackColor: AppTheme.textSecondaryColor.withOpacity(0.2),
               ),
             ],
           ),
@@ -215,8 +215,8 @@ class _DataLayersPanelState extends State<DataLayersPanel>
             style: TextStyle(
               fontSize: 14,
               color: layer.enabled 
-                  ? AppTheme.textSecondary 
-                  : AppTheme.textSecondary.withOpacity(0.6),
+                  ? AppTheme.textSecondaryColor 
+                  : AppTheme.textSecondaryColor.withOpacity(0.6),
             ),
           ),
           
@@ -229,7 +229,7 @@ class _DataLayersPanelState extends State<DataLayersPanel>
                   'Opacity',
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textSecondaryColor,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -260,7 +260,7 @@ class _DataLayersPanelState extends State<DataLayersPanel>
                   '${(layer.opacity * 100).round()}%',
                   style: const TextStyle(
                     fontSize: 12,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textSecondaryColor,
                   ),
                 ),
               ],

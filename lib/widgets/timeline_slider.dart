@@ -123,7 +123,7 @@ class _TimelineSliderState extends State<TimelineSlider>
         ),
         child: Icon(
           appState.isPlaying ? Icons.pause : Icons.play_arrow,
-          color: AppTheme.textPrimary,
+          color: AppTheme.textPrimaryColor,
           size: 24,
         ),
       ),
@@ -144,7 +144,7 @@ class _TimelineSliderState extends State<TimelineSlider>
       child: Text(
         appState.currentYear.toString(),
         style: const TextStyle(
-          color: AppTheme.textPrimary,
+          color: AppTheme.textPrimaryColor,
           fontSize: 18,
           fontWeight: FontWeight.bold,
           fontFeatures: [FontFeature.tabularFigures()],
@@ -175,7 +175,7 @@ class _TimelineSliderState extends State<TimelineSlider>
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: AppTheme.primaryColor,
-            inactiveTrackColor: AppTheme.textSecondary.withOpacity(0.3),
+            inactiveTrackColor: AppTheme.textSecondaryColor.withOpacity(0.3),
             thumbColor: AppTheme.primaryColor,
             overlayColor: AppTheme.primaryColor.withOpacity(0.2),
             thumbShape: const RoundSliderThumbShape(
@@ -201,7 +201,7 @@ class _TimelineSliderState extends State<TimelineSlider>
     return Text(
       year,
       style: const TextStyle(
-        color: AppTheme.textSecondary,
+        color: AppTheme.textSecondaryColor,
         fontSize: 10,
       ),
     );
@@ -234,14 +234,14 @@ class _TimelineSliderState extends State<TimelineSlider>
           color: AppTheme.backgroundColor,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
-            color: AppTheme.textSecondary.withOpacity(0.3),
+            color: AppTheme.textSecondaryColor.withOpacity(0.3),
             width: 1,
           ),
         ),
         child: Text(
           label,
           style: const TextStyle(
-            color: AppTheme.textSecondary,
+            color: AppTheme.textSecondaryColor,
             fontSize: 10,
           ),
         ),

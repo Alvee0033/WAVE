@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:math' as math;
 import '../providers/app_state.dart';
-import '../widgets/google_earth_widget.dart';
+import '../widgets/cesium_earth_widget.dart';
 import '../widgets/timeline_slider.dart';
 import '../widgets/data_layers_panel.dart';
 import '../utils/responsive_helper.dart';
@@ -498,7 +498,7 @@ class _MainDashboardState extends State<MainDashboard>
             child: AnimatedBuilder(
               animation: _rotationAnimation,
               builder: (context, child) {
-                return GoogleEarthWidget(
+                return CesiumEarthWidget(
                   width: ResponsiveHelper.isDesktop(context) ? 500 : 350,
                   height: ResponsiveHelper.isDesktop(context) ? 500 : 350,
                   dataLayers: _getDataLayersForCesium(context.read<AppState>()),

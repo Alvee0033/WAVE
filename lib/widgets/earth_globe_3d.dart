@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:vector_math/vector_math.dart' as vm;
 import 'dart:math' as math;
 import 'dart:ui' as ui;
-import 'dart:typed_data';
 import 'earth_texture_generator.dart';
 
 /// Interactive 3D Earth Globe Widget

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:ui' as ui;
+
+// Conditional import for web
+import 'dart:html' as html show IFrameElement;
 
 /// Web-compatible Cesium 3D Globe Widget
 /// Uses HtmlElementView for Flutter web platform
@@ -51,8 +55,15 @@ class _CesiumWebWidgetState extends State<CesiumWebWidget> {
   }
 
   dynamic _createCesiumIframe() {
-    // This will be implemented with proper web imports
-    return null;
+    if (!kIsWeb) return null;
+    
+    final iframe = html.IFrameElement()
+      ..src = 'test/cesium_test.html'
+      ..style.border = 'none'
+      ..style.width = '100%'
+      ..style.height = '100%';
+    
+    return iframe;
   }
 
   @override

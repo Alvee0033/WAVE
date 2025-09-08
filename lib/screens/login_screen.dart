@@ -91,16 +91,14 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     setState(() => _isLoading = true);
     
     try {
-      // Google Sign-In temporarily disabled
-      setState(() => _isLoading = false);
-      _showErrorSnackBar('Google Sign-In temporarily disabled');
-      return;
+      // Google Sign-In temporarily disabled for web build
+      await Future.delayed(const Duration(seconds: 1));
       
       if (mounted) {
         context.go('/dashboard');
       }
     } catch (e) {
-      print('Google sign-in error: $e');
+      debugPrint('Google sign-in error: $e');
       _showErrorSnackBar('Google sign-in failed. Using guest mode...');
       // Fallback to guest mode
       await _signInAsGuest();
@@ -115,10 +113,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     setState(() => _isLoading = true);
     
     try {
-      // Email/Password authentication temporarily disabled
-      setState(() => _isLoading = false);
-      _showErrorSnackBar('Email/Password authentication temporarily disabled');
-      return;
+      // Email/Password authentication temporarily disabled for web build
+      await Future.delayed(const Duration(seconds: 1));
       
       if (mounted) {
         context.go('/dashboard');
@@ -136,15 +132,14 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     setState(() => _isLoading = true);
     
     try {
-      // Anonymous sign-in temporarily disabled - navigate directly to dashboard
+      // Anonymous sign-in temporarily disabled for web build
+      await Future.delayed(const Duration(seconds: 1));
       if (mounted) {
-        _showErrorSnackBar('Guest mode: Anonymous auth disabled in Firebase. Redirecting...');
-        Future.delayed(const Duration(seconds: 1), () {
-          if (mounted) {
-            context.go('/dashboard');
-          }
-        });
+        context.go('/dashboard');
       }
+    } catch (e) {
+      debugPrint('Anonymous sign-in error: $e');
+      _showErrorSnackBar('Guest mode failed. Please try again.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

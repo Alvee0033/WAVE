@@ -190,7 +190,7 @@ class _SplashScreenState extends State<SplashScreen>
                     child: const Text(
                       'Powered by NASA Earth Science Data',
                       style: TextStyle(
-                        color: AppTheme.textSecondary,
+                        color: AppTheme.textSecondaryColor,
                         fontSize: 12,
                       ),
                       textAlign: TextAlign.center,

@@ -15,8 +15,8 @@ dependencies:
   go_router: ^14.2.7
   
   # 3D Graphics and Visualization
-  webview_flutter: ^4.4.2
-  webview_flutter_web: ^0.2.2+4
+  # webview_flutter: ^4.10.0
+  # webview_flutter_web: ^0.2.2+4
   vector_math: ^2.1.4
   flutter_cube: ^0.1.1
   
@@ -42,7 +42,7 @@ dependencies:
   flutter_svg: ^2.0.9
   cached_network_image: ^3.3.0
   shimmer: ^3.0.0
-  # Firebase dependencies temporarily disabled for Cesium testing
+  # Firebase dependencies (temporarily disabled for web build)
   # firebase_core: ^2.32.0
   # firebase_auth: ^4.16.0
   # google_sign_in: ^6.1.5

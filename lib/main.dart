@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-import 'package:webview_flutter_web/webview_flutter_web.dart';
+// import 'package:webview_flutter/webview_flutter.dart';
+// import 'package:webview_flutter_web/webview_flutter_web.dart';
 // import 'package:firebase_core/firebase_core.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
+// Removed: import 'dart:html' as html;
 import 'screens/splash_screen.dart';
-import 'screens/main_dashboard.dart';
-import 'screens/region_details.dart';
 import 'screens/login_screen.dart';
+import 'widgets/main_layout.dart';
 import 'providers/app_state.dart';
 import 'theme/app_theme.dart';
 import 'services/navigation_service.dart';
@@ -19,9 +20,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Initialize WebView platform for web
-  if (WebViewPlatform.instance == null) {
-    WebViewPlatform.instance = WebWebViewPlatform();
-  }
+  // WebViewPlatform.instance ??= WebWebViewPlatform();
+  
+  // Removed HTML element registration for non-web builds
+  // if (kIsWeb) {
+  //   _registerHtmlElementViews();
+  // }
   
   // Initialize Firebase with platform-specific options
   // await Firebase.initializeApp(
@@ -52,7 +56,7 @@ class WaveApp extends StatelessWidget {
       ],
       child: MaterialApp.router(
         title: 'WAVE - World Analysis & Visualization Engine',
-        theme: AppTheme.darkTheme,
+        theme: AppTheme.lightTheme,
         routerConfig: _router,
         debugShowCheckedModeBanner: false,
       ),
@@ -78,7 +82,7 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: NavigationService.dashboardRoute,
       name: 'dashboard',
-      builder: (context, state) => const MainDashboard(),
+      builder: (context, state) => const MainLayout(),
     ),
     GoRoute(
       path: '${NavigationService.regionDetailsRoute}/:regionId',
@@ -88,24 +92,24 @@ final GoRouter _router = GoRouter(
         if (regionId == null || regionId.isEmpty) {
           return const _ErrorPage(error: 'Invalid region ID');
         }
-        return RegionDetails(regionId: regionId);
+        return const Text('Region Details - Coming Soon');
       },
     ),
   ],
   // redirect: (context, state) {
   //   final user = FirebaseAuth.instance.currentUser;
   //   final isLoginRoute = state.matchedLocation == '/login';
-    
+  //   
   //   // If user is not logged in and not on login page, redirect to login
   //   if (user == null && !isLoginRoute) {
   //     return '/login';
   //   }
-    
+  //   
   //   // If user is logged in and on login page, redirect to dashboard
   //   if (user != null && isLoginRoute) {
   //     return NavigationService.dashboardRoute;
   //   }
-    
+  //   
   //   return null;
   // },
 );
@@ -154,3 +158,5 @@ class _ErrorPage extends StatelessWidget {
     );
   }
 }
+
+// Removed web-only HTML registration function to avoid dart:html on mobile builds

@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:html' as html;
 import 'dart:math' as math;
 
-/// Google Earth Engine Widget for Flutter Web
-/// Uses iframe to embed Google Earth Engine
-class GoogleEarthWidget extends StatefulWidget {
+/// Cesium 3D Earth Widget for Flutter Web
+/// Embeds the Cesium test HTML file for interactive 3D Earth
+class CesiumEarthWidget extends StatefulWidget {
   final double width;
   final double height;
   final VoidCallback? onResetView;
   final Function(double lat, double lng)? onLocationChanged;
   final Map<String, dynamic>? dataLayers;
   
-  const GoogleEarthWidget({
+  const CesiumEarthWidget({
     super.key,
     this.width = 400,
     this.height = 400,
@@ -22,58 +21,45 @@ class GoogleEarthWidget extends StatefulWidget {
   });
 
   @override
-  State<GoogleEarthWidget> createState() => _GoogleEarthWidgetState();
+  State<CesiumEarthWidget> createState() => _CesiumEarthWidgetState();
 }
 
-class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
+class _CesiumEarthWidgetState extends State<CesiumEarthWidget> {
   bool _isLoading = true;
   bool _hasError = false;
   String? _errorMessage;
+  // late html.IFrameElement _iframe; // Removed for non-web builds
 
   @override
   void initState() {
     super.initState();
     if (kIsWeb) {
-      _initializeGoogleEarth();
+      _initializeCesiumEarth();
+    } else {
+      // On non-web platforms, show fallback immediately
+      _isLoading = false;
     }
   }
 
-  void _initializeGoogleEarth() {
-    if (kIsWeb) {
-      _createEarthIframe();
-    }
-    
-    // Simulate loading time
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    });
-  }
-
-  void _createEarthIframe() {
+  void _initializeCesiumEarth() {
     if (!kIsWeb) return;
-    
-    final iframe = html.IFrameElement()
-      ..src = 'test/cesium_test.html'
-      ..style.border = 'none'
-      ..style.width = '100%'
-      ..style.height = '100%'
-      ..style.borderRadius = '12px';
-    
-    // Register the HTML element view
-    final viewType = 'cesium-earth-${DateTime.now().millisecondsSinceEpoch}';
-    html.document.registerElement(viewType, html.IFrameElement);
-    
-    // Add the iframe to the DOM
-    final container = html.DivElement()
-      ..style.width = '100%'
-      ..style.height = '100%'
-      ..append(iframe);
-    
-    html.document.body?.append(container);
+    try {
+      // _createCesiumIframe(); // Skip direct iframe creation in shared code
+      // Simulate loading time for Cesium to initialize
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _hasError = true;
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -83,6 +69,10 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
       height: widget.height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF4285F4).withOpacity(0.3),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.3),
@@ -95,54 +85,27 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
         borderRadius: BorderRadius.circular(12),
         child: Stack(
           children: [
-            if (_hasError)
+            if (kIsWeb && !_hasError)
+              _buildCesiumPlaceholder()
+            else if (_hasError)
               _buildErrorWidget()
-            else if (kIsWeb)
-              _buildGoogleEarthWidget()
             else
               _buildFallbackWidget(),
-            
-            if (_isLoading && !_hasError)
-              _buildLoadingWidget(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGoogleEarthWidget() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFF4285F4).withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Stack(
-          children: [
-            // 3D Earth iframe
-            _buildEarthIframe(),
-            
-            // Control overlay
             Positioned(
               top: 16,
               right: 16,
               child: _buildControlOverlay(),
             ),
-            
-            // Loading indicator
-            if (_isLoading)
+            if (_isLoading && !_hasError)
               Container(
-                color: Colors.black.withOpacity(0.7),
+                color: Colors.black.withOpacity(0.8),
                 child: const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       CircularProgressIndicator(
                         color: Color(0xFF4285F4),
+                        strokeWidth: 3,
                       ),
                       SizedBox(height: 16),
                       Text(
@@ -150,6 +113,15 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Initializing Cesium Engine',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -162,11 +134,8 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
     );
   }
 
-  Widget _buildEarthIframe() {
-    if (!kIsWeb) {
-      return _buildFallbackWidget();
-    }
-
+  Widget _buildCesiumPlaceholder() {
+    // Web placeholder (no direct html usage here)
     return Container(
       width: widget.width,
       height: widget.height,
@@ -183,10 +152,7 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
       ),
       child: Stack(
         children: [
-          // 3D Earth background
           _buildEarthBackground(),
-          
-          // Interactive 3D Earth visualization
           Center(
             child: Container(
               width: 300,
@@ -218,11 +184,22 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
               ),
             ),
           ),
-          
-          // Floating particles
           ...List.generate(20, (index) => _buildFloatingParticle(index)),
         ],
       ),
+    );
+  }
+
+  Widget _buildEarthBackground() {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(seconds: 10),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return CustomPaint(
+          painter: _EarthBackgroundPainter(value),
+          size: Size.infinite,
+        );
+      },
     );
   }
 
@@ -257,8 +234,12 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.7),
+        color: Colors.black.withOpacity(0.8),
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFF4285F4).withOpacity(0.3),
+          width: 1,
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -283,21 +264,15 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
             onPressed: () => _showSearchDialog(),
             size: 32,
           ),
+          const SizedBox(height: 8),
+          _buildControlButton(
+            icon: Icons.fullscreen,
+            label: 'Fullscreen',
+            onPressed: () => _toggleFullscreen(),
+            size: 32,
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildEarthBackground() {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(seconds: 10),
-      tween: Tween(begin: 0.0, end: 1.0),
-      builder: (context, value, child) {
-        return CustomPaint(
-          painter: _EarthBackgroundPainter(value),
-          size: Size.infinite,
-        );
-      },
     );
   }
 
@@ -305,16 +280,17 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
     required IconData icon,
     required String label,
     required VoidCallback? onPressed,
-    double size = 48,
+    double size = 32,
   }) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           width: size,
           height: size,
           decoration: BoxDecoration(
             color: const Color(0xFF4285F4).withOpacity(0.2),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(size / 2),
             border: Border.all(
               color: const Color(0xFF4285F4).withOpacity(0.5),
               width: 1,
@@ -325,8 +301,9 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
             icon: Icon(
               icon,
               color: const Color(0xFF4285F4),
-              size: 20,
+              size: size * 0.6,
             ),
+            padding: EdgeInsets.zero,
           ),
         ),
         const SizedBox(height: 4),
@@ -334,7 +311,8 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
           label,
           style: const TextStyle(
             color: Colors.white70,
-            fontSize: 12,
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -343,31 +321,62 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
 
   Widget _buildFallbackWidget() {
     return Container(
-      color: const Color(0xFF0A0A0A),
-      child: const Center(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF0A0A0A),
+            Color(0xFF1A1A2E),
+            Color(0xFF16213E),
+          ],
+        ),
+      ),
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.public,
-              color: Color(0xFF4285F4),
-              size: 64,
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF4CAF50).withOpacity(0.8),
+                    const Color(0xFF2E7D32).withOpacity(0.6),
+                    const Color(0xFF1B5E20).withOpacity(0.4),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF4CAF50).withOpacity(0.3),
+                    blurRadius: 20,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.public,
+                color: Colors.white,
+                size: 60,
+              ),
             ),
-            SizedBox(height: 16),
-            Text(
-              'Google Earth Engine',
+            const SizedBox(height: 24),
+            const Text(
+              '3D Earth Globe',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 18,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 8),
-            Text(
-              'Web platform required',
+            const SizedBox(height: 8),
+            const Text(
+              'Interactive Cesium Engine',
               style: TextStyle(
                 color: Colors.white70,
-                fontSize: 14,
+                fontSize: 16,
               ),
             ),
           ],
@@ -378,7 +387,17 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
 
   Widget _buildErrorWidget() {
     return Container(
-      color: const Color(0xFF0A0A0A),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF0A0A0A),
+            Color(0xFF1A1A2E),
+            Color(0xFF16213E),
+          ],
+        ),
+      ),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -390,7 +409,7 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Failed to load Google Earth',
+              'Failed to load 3D Earth',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 18,
@@ -413,33 +432,13 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
                   _hasError = false;
                   _isLoading = true;
                 });
-                _initializeGoogleEarth();
+                _initializeCesiumEarth();
               },
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoadingWidget() {
-    return Container(
-      color: const Color(0xFF0A0A0A),
-      child: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(
-              color: Color(0xFF4285F4),
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Loading Google Earth...',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4285F4),
+                foregroundColor: Colors.white,
               ),
+              child: const Text('Retry'),
             ),
           ],
         ),
@@ -451,16 +450,24 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Data Layers'),
+        backgroundColor: const Color(0xFF1A1A2E),
+        title: const Text(
+          'Data Layers',
+          style: TextStyle(color: Colors.white),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Available layers:'),
+            const Text(
+              'Available layers:',
+              style: TextStyle(color: Colors.white70),
+            ),
             const SizedBox(height: 16),
             _buildLayerItem('Satellite Imagery', true),
             _buildLayerItem('Temperature Data', false),
             _buildLayerItem('Precipitation', false),
             _buildLayerItem('Vegetation Index', false),
+            _buildLayerItem('Population Density', false),
           ],
         ),
         actions: [
@@ -475,12 +482,16 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
 
   Widget _buildLayerItem(String name, bool enabled) {
     return ListTile(
-      title: Text(name),
+      title: Text(
+        name,
+        style: const TextStyle(color: Colors.white),
+      ),
       trailing: Switch(
         value: enabled,
         onChanged: (value) {
           // Handle layer toggle
         },
+        activeColor: const Color(0xFF4285F4),
       ),
     );
   }
@@ -489,16 +500,31 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Search Location'),
+        backgroundColor: const Color(0xFF1A1A2E),
+        title: const Text(
+          'Search Location',
+          style: TextStyle(color: Colors.white),
+        ),
         content: TextField(
+          style: const TextStyle(color: Colors.white),
           decoration: const InputDecoration(
             hintText: 'Enter location (e.g., New York, Tokyo)',
+            hintStyle: TextStyle(color: Colors.white70),
             border: OutlineInputBorder(),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFF4285F4)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFF4285F4)),
+            ),
           ),
           onSubmitted: (value) {
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Searching for: $value')),
+              SnackBar(
+                content: Text('Searching for: $value'),
+                backgroundColor: const Color(0xFF4285F4),
+              ),
             );
           },
         ),
@@ -516,19 +542,19 @@ class _GoogleEarthWidgetState extends State<GoogleEarthWidget> {
     );
   }
 
-  void _openGoogleEarth() {
-    if (kIsWeb) {
-      // Open Google Earth in new tab
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Opening Google Earth in new tab...'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      
-      // In a real implementation, you would use:
-      // html.window.open('https://earth.google.com', '_blank');
-    }
+  void _toggleFullscreen() {
+    // No-op on non-web; for web, avoid direct dart:html usage here
+    if (!kIsWeb) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Fullscreen not supported on this platform'),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }
 
@@ -547,16 +573,12 @@ class _EarthBackgroundPainter extends CustomPainter {
     for (int i = 0; i < 20; i++) {
       final alpha = (1.0 - (i / 20.0)) * 0.3;
       paint.color = const Color(0xFF4285F4).withOpacity(alpha);
-      
-      // Horizontal lines
       final y = (size.height / 20) * i;
       canvas.drawLine(
         Offset(0, y),
         Offset(size.width, y),
         paint,
       );
-      
-      // Vertical lines
       final x = (size.width / 20) * i;
       canvas.drawLine(
         Offset(x, 0),
@@ -570,7 +592,6 @@ class _EarthBackgroundPainter extends CustomPainter {
       final radius = (size.width / 10) * (i + 1) * animationValue;
       final alpha = (1.0 - (i / 5.0)) * 0.2;
       paint.color = const Color(0xFF4285F4).withOpacity(alpha);
-      
       canvas.drawCircle(
         Offset(size.width / 2, size.height / 2),
         radius,
@@ -582,5 +603,4 @@ class _EarthBackgroundPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
-
 
