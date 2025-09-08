@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:google_sign_in/google_sign_in.dart';
 import 'package:go_router/go_router.dart';
-import '../theme/app_theme.dart';
-import '../theme/app_constants.dart';
+import 'dart:ui';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,10 +20,22 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   bool _isPasswordVisible = false;
   
   late AnimationController _fadeController;
-  late AnimationController _formController;
+  late AnimationController _slideController;
+  late AnimationController _floatController;
   
   late Animation<double> _fadeAnimation;
-  late Animation<double> _formOpacityAnimation;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _floatAnimation;
+
+  // Muted color palette
+  static const Color _mutedBlue = Color(0xFF6B7B8C);
+  static const Color _mutedPurple = Color(0xFF8B7B9C);
+  static const Color _mutedGray = Color(0xFF4A5568);
+  static const Color _mutedSlate = Color(0xFF2D3748);
+  static const Color _mutedWhite = Color(0xFFF7FAFC);
+  static const Color _mutedDark = Color(0xFF1A202C);
+  static const Color _glassWhite = Color(0x1AFFFFFF);
+  static const Color _glassDark = Color(0x1A000000);
 
   @override
   void initState() {
@@ -32,12 +43,17 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     
     // Initialize animation controllers
     _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    
+    _slideController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
     
-    _formController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+    _floatController = AnimationController(
+      duration: const Duration(seconds: 3),
       vsync: this,
     );
     
@@ -46,16 +62,19 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
     );
     
-    _formOpacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _formController, curve: Curves.easeOut),
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
+    
+    _floatAnimation = Tween<double>(begin: -10.0, end: 10.0).animate(
+      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
     );
     
     // Start animations
     _fadeController.forward();
-    
-    Future.delayed(const Duration(milliseconds: 300), () {
-      _formController.forward();
-    });
+    _slideController.forward();
+    _floatController.repeat(reverse: true);
   }
 
   @override
@@ -63,7 +82,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     _emailController.dispose();
     _passwordController.dispose();
     _fadeController.dispose();
-    _formController.dispose();
+    _slideController.dispose();
+    _floatController.dispose();
     super.dispose();
   }
 
@@ -71,38 +91,19 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     setState(() => _isLoading = true);
     
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn(
-        scopes: ['email', 'https://www.googleapis.com/auth/userinfo.profile'],
-        serverClientId: '240747642772-8r8blna4mfkbb35r995ehop7qrun395i.apps.googleusercontent.com',
-      );
-      
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      if (googleUser == null) {
-        setState(() => _isLoading = false);
-        return;
-      }
-      
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      
-      final String? accessToken = googleAuth.accessToken;
-      final String? idToken = googleAuth.idToken;
-      
-      if (idToken == null) {
-        throw Exception('Missing Google ID Token');
-      }
-
-      final credential = GoogleAuthProvider.credential(
-        accessToken: accessToken,
-        idToken: idToken,
-      );
-      
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      // Google Sign-In temporarily disabled
+      setState(() => _isLoading = false);
+      _showErrorSnackBar('Google Sign-In temporarily disabled');
+      return;
       
       if (mounted) {
-        context.go('/simple-dashboard');
+        context.go('/dashboard');
       }
     } catch (e) {
-      _showErrorSnackBar('Google sign-in failed: ${e.toString()}');
+      print('Google sign-in error: $e');
+      _showErrorSnackBar('Google sign-in failed. Using guest mode...');
+      // Fallback to guest mode
+      await _signInAsGuest();
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -114,69 +115,36 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     setState(() => _isLoading = true);
     
     try {
-      if (_isSignUp) {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
-      } else {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
-      }
+      // Email/Password authentication temporarily disabled
+      setState(() => _isLoading = false);
+      _showErrorSnackBar('Email/Password authentication temporarily disabled');
+      return;
       
       if (mounted) {
-        context.go('/simple-dashboard');
+        context.go('/dashboard');
       }
-    } on FirebaseAuthException catch (e) {
-      String message = 'Authentication failed';
-      switch (e.code) {
-        case 'user-not-found':
-          message = 'No user found with this email';
-          break;
-        case 'wrong-password':
-          message = 'Incorrect password';
-          break;
-        case 'email-already-in-use':
-          message = 'Email is already registered';
-          break;
-        case 'weak-password':
-          message = 'Password is too weak';
-          break;
-        case 'invalid-email':
-          message = 'Invalid email address';
-          break;
-      }
-      _showErrorSnackBar(message);
     } catch (e) {
-      _showErrorSnackBar('An error occurred: ${e.toString()}');
+      String message = 'Authentication failed: ${e.toString()}';
+      _showErrorSnackBar(message);
+      await _signInAsGuest();
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _signInAnonymously() async {
+  Future<void> _signInAsGuest() async {
     setState(() => _isLoading = true);
     
     try {
-      await FirebaseAuth.instance.signInAnonymously();
-      
+      // Anonymous sign-in temporarily disabled - navigate directly to dashboard
       if (mounted) {
-        context.go('/simple-dashboard');
+        _showErrorSnackBar('Guest mode: Anonymous auth disabled in Firebase. Redirecting...');
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            context.go('/dashboard');
+          }
+        });
       }
-    } on FirebaseAuthException catch (e) {
-      String message = 'Anonymous sign-in failed';
-      switch (e.code) {
-        case 'operation-not-allowed':
-          message = 'Anonymous authentication is not enabled';
-          break;
-        default:
-          message = 'Anonymous sign-in failed: ${e.message}';
-      }
-      _showErrorSnackBar(message);
-    } catch (e) {
-      _showErrorSnackBar('An error occurred: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -186,9 +154,10 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red.shade600,
+        backgroundColor: _mutedSlate.withOpacity(0.9),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
@@ -196,130 +165,261 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 60),
-                
-                // Professional Header
-                _buildProfessionalHeader(),
-                
-                const SizedBox(height: 50),
-                
-                // Clean Login Form
-                _buildCleanForm(),
-                
-                const SizedBox(height: 30),
-                
-                // Google Sign In Button
-                _buildGoogleButton(),
-                
-                const SizedBox(height: 16),
-                
-                _buildTestSignInButton(),
-                
-                const SizedBox(height: 30),
-                
-                // Toggle
-                _buildToggle(),
-                
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfessionalHeader() {
-    return Column(
-      children: [
-        // WAVE Logo
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: const Color(0xFF2563EB),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF2563EB).withOpacity(0.2),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              _mutedDark,
+              _mutedSlate,
+              _mutedGray,
             ],
-          ),
-          child: const Icon(
-            Icons.waves,
-            size: 40,
-            color: Colors.white,
+            stops: [0.0, 0.5, 1.0],
           ),
         ),
-        const SizedBox(height: 24),
-        
-        // App Title
-        Text(
-          'WAVE',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF1F2937),
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(height: 8),
-        
-        // Subtitle
-        Text(
-          'AI-Powered World Analysis & Visualization Engine',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 16,
-            color: const Color(0xFF6B7280),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  
-
-
-  Widget _buildCleanForm() {
-    return FadeTransition(
-      opacity: _formOpacityAnimation,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8),
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
+        child: Stack(
+          children: [
+            // Animated background elements
+            _buildAnimatedBackground(),
+            
+            // Main content - Single screen layout
+            SafeArea(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: const NeverScrollableScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: IntrinsicHeight(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  const SizedBox(height: 20),
+                                  
+                                  // Compact Header
+                                  _buildCompactHeader(),
+                                  
+                                  // Compact Form
+                                  _buildCompactForm(),
+                                  
+                                  // Compact Buttons
+                                  _buildCompactButtons(),
+                                  
+                                  // Compact Toggle
+                                  _buildCompactToggle(),
+                                  
+                                  const SizedBox(height: 20),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
             ),
           ],
         ),
-        child: _buildLoginForm(),
       ),
     );
   }
-  
-  Widget _buildLoginForm() {
+
+  Widget _buildAnimatedBackground() {
+    return AnimatedBuilder(
+      animation: _floatAnimation,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            // Smaller floating orbs for compact design
+            Positioned(
+              top: 80 + _floatAnimation.value,
+              left: 30,
+              child: _buildFloatingOrb(_mutedBlue.withOpacity(0.08), 60),
+            ),
+            Positioned(
+              top: 150 - _floatAnimation.value * 0.5,
+              right: 50,
+              child: _buildFloatingOrb(_mutedPurple.withOpacity(0.06), 80),
+            ),
+            Positioned(
+              bottom: 120 + _floatAnimation.value * 0.7,
+              left: 60,
+              child: _buildFloatingOrb(_mutedGray.withOpacity(0.05), 70),
+            ),
+            Positioned(
+              bottom: 200 - _floatAnimation.value,
+              right: 40,
+              child: _buildFloatingOrb(_mutedBlue.withOpacity(0.04), 50),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildFloatingOrb(Color color, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            color,
+            color.withOpacity(0.0),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color,
+            blurRadius: 15,
+            spreadRadius: 3,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: _glassWhite.withOpacity(0.2),
+          width: 1,
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _glassWhite.withOpacity(0.1),
+            _glassDark.withOpacity(0.1),
+          ],
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Column(
+            children: [
+              // Compact WAVE Logo
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _glassWhite.withOpacity(0.3),
+                    width: 1,
+                  ),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      _mutedBlue.withOpacity(0.3),
+                      _mutedPurple.withOpacity(0.3),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _mutedBlue.withOpacity(0.2),
+                      blurRadius: 15,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.waves,
+                  size: 30,
+                  color: _mutedWhite,
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // Compact App Title
+              Text(
+                'WAVE',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: _mutedWhite,
+                  letterSpacing: 1.5,
+                  shadows: [
+                    Shadow(
+                      color: _mutedBlue.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              
+              // Compact Subtitle
+              Text(
+                'AI-Powered World Analysis & Visualization',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _mutedWhite.withOpacity(0.8),
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactForm() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: _glassWhite.withOpacity(0.2),
+          width: 1,
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _glassWhite.withOpacity(0.1),
+            _glassDark.withOpacity(0.1),
+          ],
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: _buildForm(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildForm() {
     return Form(
       key: _formKey,
       child: Column(
         children: [
-          _buildCleanTextField(
+          _buildCompactTextField(
             controller: _emailController,
             labelText: 'Email',
             hintText: 'Enter your email',
@@ -335,8 +435,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
               return null;
             },
           ),
-          const SizedBox(height: 20),
-          _buildCleanTextField(
+          const SizedBox(height: 16),
+          _buildCompactTextField(
             controller: _passwordController,
             labelText: 'Password',
             hintText: 'Enter your password',
@@ -345,7 +445,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             suffixIcon: IconButton(
               icon: Icon(
                 _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                color: const Color(0xFF6B7280),
+                color: _mutedWhite.withOpacity(0.7),
+                size: 18,
               ),
               onPressed: () {
                 setState(() {
@@ -363,44 +464,33 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
               return null;
             },
           ),
-          const SizedBox(height: 28),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: _isLoading ? null : _signInWithEmailPassword,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
-                foregroundColor: Colors.white,
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : Text(
-                      _isSignUp ? 'Create Account' : 'Sign In',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+          const SizedBox(height: 20),
+          _buildCompactButton(
+            onPressed: _isLoading ? null : _signInWithEmailPassword,
+            child: _isLoading
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(_mutedWhite),
                     ),
-            ),
+                  )
+                : Text(
+                    _isSignUp ? 'Create Account' : 'Sign In',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: _mutedWhite,
+                    ),
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCleanTextField({
+  Widget _buildCompactTextField({
     required TextEditingController controller,
     required String labelText,
     required String hintText,
@@ -410,198 +500,274 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     Widget? suffixIcon,
     String? Function(String?)? validator,
   }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      obscureText: obscureText,
-      style: const TextStyle(
-        color: Color(0xFF1F2937),
-        fontSize: 16,
-        fontWeight: FontWeight.w500,
-      ),
-      decoration: InputDecoration(
-        labelText: labelText,
-        hintText: hintText,
-        prefixIcon: Icon(
-          prefixIcon,
-          color: const Color(0xFF6B7280),
-          size: 20,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _glassWhite.withOpacity(0.2),
+          width: 1,
         ),
-        suffixIcon: suffixIcon,
-        labelStyle: const TextStyle(
-          color: Color(0xFF6B7280),
-          fontWeight: FontWeight.w500,
-        ),
-        hintStyle: const TextStyle(
-          color: Color(0xFF9CA3AF),
-          fontWeight: FontWeight.w400,
-        ),
-        filled: true,
-        fillColor: const Color(0xFFF9FAFB),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFFE5E7EB),
-            width: 1,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFFE5E7EB),
-            width: 1,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFF2563EB),
-            width: 2,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFFEF4444),
-            width: 1,
-          ),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFFEF4444),
-            width: 2,
-          ),
-        ),
-        errorStyle: const TextStyle(
-          color: Color(0xFFEF4444),
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      validator: validator,
-    );
-  }
-
-  Widget _buildGoogleButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: OutlinedButton(
-        onPressed: _isLoading ? null : _signInWithGoogle,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.white,
-          side: const BorderSide(
-            color: Color(0xFFE5E7EB),
-            width: 1,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 1,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(2),
-              child: const Icon(
-                Icons.g_mobiledata,
-                color: Color(0xFF4285F4),
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Continue with Google',
-              style: TextStyle(
-                color: Color(0xFF1F2937),
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _glassWhite.withOpacity(0.05),
+            _glassDark.withOpacity(0.05),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildTestSignInButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _signInAnonymously,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF10B981),
-          foregroundColor: Colors.white,
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+          child: TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            obscureText: obscureText,
+            style: const TextStyle(
+              color: _mutedWhite,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
+            decoration: InputDecoration(
+              labelText: labelText,
+              hintText: hintText,
+              prefixIcon: Icon(
+                prefixIcon,
+                color: _mutedWhite.withOpacity(0.7),
+                size: 18,
+              ),
+              suffixIcon: suffixIcon,
+              labelStyle: TextStyle(
+                color: _mutedWhite.withOpacity(0.8),
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+              hintStyle: TextStyle(
+                color: _mutedWhite.withOpacity(0.5),
+                fontWeight: FontWeight.w400,
+                fontSize: 14,
+              ),
+              filled: true,
+              fillColor: Colors.transparent,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: _mutedBlue.withOpacity(0.5),
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Colors.red.withOpacity(0.5),
+                  width: 1,
+                ),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Colors.red.withOpacity(0.7),
+                  width: 2,
+                ),
+              ),
+              errorStyle: TextStyle(
+                color: Colors.red.withOpacity(0.8),
+                fontWeight: FontWeight.w500,
+                fontSize: 12,
+              ),
+            ),
+            validator: validator,
           ),
         ),
-        child: _isLoading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.person_outline,
-                    size: 20,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Continue as Guest',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
       ),
     );
   }
 
-  Widget _buildToggle() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          _isSignUp ? 'Already have an account?' : 'Don\'t have an account?',
-          style: const TextStyle(
-            color: Color(0xFF6B7280),
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+  Widget _buildCompactButton({
+    required VoidCallback? onPressed,
+    required Widget child,
+  }) {
+    return Container(
+      width: double.infinity,
+      height: 48,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _glassWhite.withOpacity(0.2),
+          width: 1,
         ),
-        TextButton(
-          onPressed: () {
-            setState(() {
-              _isSignUp = !_isSignUp;
-              _formKey.currentState?.reset();
-              _emailController.clear();
-              _passwordController.clear();
-            });
-          },
-          child: Text(
-            _isSignUp ? 'Sign In' : 'Sign Up',
-            style: const TextStyle(
-              color: Color(0xFF2563EB),
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: onPressed != null
+              ? [
+                  _mutedBlue.withOpacity(0.3),
+                  _mutedPurple.withOpacity(0.3),
+                ]
+              : [
+                  _mutedGray.withOpacity(0.2),
+                  _mutedSlate.withOpacity(0.2),
+                ],
+        ),
+        boxShadow: onPressed != null
+            ? [
+                BoxShadow(
+                  color: _mutedBlue.withOpacity(0.2),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onPressed,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                alignment: Alignment.center,
+                child: child,
+              ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactButtons() {
+    return Column(
+      children: [
+        _buildCompactButton(
+          onPressed: _isLoading ? null : _signInWithGoogle,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(2),
+                child: const Icon(
+                  Icons.g_mobiledata,
+                  color: _mutedWhite,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Continue with Google',
+                style: TextStyle(
+                  color: _mutedWhite,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildCompactButton(
+          onPressed: _isLoading ? null : _signInAsGuest,
+          child: _isLoading
+              ? const SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(_mutedWhite),
+                  ),
+                )
+              : const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.person_outline,
+                      size: 18,
+                      color: _mutedWhite,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Continue as Guest',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: _mutedWhite,
+                      ),
+                    ),
+                  ],
+                ),
         ),
       ],
     );
   }
 
+  Widget _buildCompactToggle() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _glassWhite.withOpacity(0.1),
+          width: 1,
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _glassWhite.withOpacity(0.05),
+            _glassDark.withOpacity(0.05),
+          ],
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                _isSignUp ? 'Already have an account?' : 'Don\'t have an account?',
+                style: TextStyle(
+                  color: _mutedWhite.withOpacity(0.8),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isSignUp = !_isSignUp;
+                    _formKey.currentState?.reset();
+                    _emailController.clear();
+                    _passwordController.clear();
+                  });
+                },
+                child: Text(
+                  _isSignUp ? 'Sign In' : 'Sign Up',
+                  style: TextStyle(
+                    color: _mutedBlue.withOpacity(0.9),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

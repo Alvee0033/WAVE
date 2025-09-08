@@ -45,7 +45,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyA0AEwSFVU94zpNdyL4cGXsxKsCMN59sUk',
-    appId: '1:240747642772:web:abcdef123456789',
+    appId: '1:240747642772:web:ec87bfb4d2ecba51d95981',
     messagingSenderId: '240747642772',
     projectId: 'wave-dc616',
     authDomain: 'wave-dc616.firebaseapp.com',
@@ -62,7 +62,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyA0AEwSFVU94zpNdyL4cGXsxKsCMN59sUk',
-    appId: '1:240747642772:ios:abcdef123456789',
+    appId: '1:240747642772:ios:ec87bfb4d2ecba51d95981',
     messagingSenderId: '240747642772',
     projectId: 'wave-dc616',
     storageBucket: 'wave-dc616.firebasestorage.app',
@@ -71,7 +71,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyA0AEwSFVU94zpNdyL4cGXsxKsCMN59sUk',
-    appId: '1:240747642772:macos:abcdef123456789',
+    appId: '1:240747642772:macos:ec87bfb4d2ecba51d95981',
     messagingSenderId: '240747642772',
     projectId: 'wave-dc616',
     storageBucket: 'wave-dc616.firebasestorage.app',
